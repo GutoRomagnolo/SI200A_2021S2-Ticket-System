@@ -3,13 +3,6 @@
 
 #define FILE_DATA "./file_data.txt"
 
-typedef struct {
-    int id;
-    char description[256];
-    float price;
-    int status;
-} Ticket;
-
 void start_menu();
 void create_menu(char *file_data);
 void list_menu(char *file_data);
@@ -39,23 +32,18 @@ int main() {
             scanf("%d", &option);
         } else if (option == 1) {
             create_menu(FILE_DATA);
-            Ticket ticket;
             option = 0;
         } else if (option == 2) {
             list_menu(FILE_DATA);
-            Ticket ticket;
             option = 0;
         } else if (option == 3) {
             search_menu(FILE_DATA, 0);
-            Ticket ticket;
             option = 0;
         } else if (option == 4) {
             edit_menu(FILE_DATA, 0);
-            Ticket ticket;
             option = 0;
         } else if (option == 5) {
             remove_menu(FILE_DATA, 0);
-            Ticket ticket;
             option = 0;
         } else if (option == 6) {
             printf("Deseja realmente sair (S/N)? ");
@@ -87,27 +75,64 @@ void start_menu() {
     printf("Qual menu deseja acessar? ");
 }
 
-void create_menu(char *file_path) {
+void create_menu(char *file_data) {
+    char name[100], description[300];
+    float price;
+    int status;
+
+    FILE *p;
+    
     printf("SEJA BEM-VINDO AO TICKETSYSTEM\n\n");
     printf("Cadastrar ticket\n");
+    
+    printf("Título do ingresso:\t");
+    scanf("%s", name);
+    
+    printf("Descrição do ingresso: \t");
+    scanf("%s", description);
+    
+    printf("Valor do ingresso:\t");
+    scanf("%f", &price);
+    
+    printf("Situação do ingresso:\t");
+    scanf("%d", &status);
+    
+    p = fopen("file_data.txt", "a");
+    
+    fprintf(p, "Título: %s\n", name);
+    fprintf(p, "Descrição: %s\n", description);
+    fprintf(p, "Preço: %.2f\n", price);
+    fprintf(p, "Status: %d\n", status);
+    
+    if(status == 1){
+        fprintf(p, "Status: Disponível\n");
+        fprintf(p, "\n");
+    }
+    
+    else{
+        fprintf(p, "Status: Indisponível\n");
+        fprintf(p, "\n");
+    }
+    
+    fclose(p);
 }
 
-void list_menu(char *file_path) {
+void list_menu(char *file_data) {
     printf("SEJA BEM-VINDO AO TICKETSYSTEM\n\n");
     printf("Lista de tickets\n");
 }
 
-void search_menu(char *file_path, int id) {
+void search_menu(char *file_data, int id) {
     printf("SEJA BEM-VINDO AO TICKETSYSTEM\n\n");
     printf("Busca de tickets\n");
 }
 
-void edit_menu(char *file_path, int id) {
+void edit_menu(char *file_data, int id) {
     printf("SEJA BEM-VINDO AO TICKETSYSTEM\n\n");
     printf("Editar ticket\n");
 }
 
-void remove_menu(char *file_path, int id) {
+void remove_menu(char *file_data, int id) {
     printf("SEJA BEM-VINDO AO TICKETSYSTEM\n\n");
     printf("Remover ticket\n");
 }

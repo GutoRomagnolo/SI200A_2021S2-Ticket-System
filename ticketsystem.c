@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 #define FILE_DATA "./file_data.txt"
 
@@ -49,6 +50,7 @@ int main() {
             printf("Deseja realmente sair (S/N)? ");
             getchar();
             scanf("%c", &confirm);
+            confirm = toupper(confirm);
 
             if (confirm == 'N') {
                 option = 0;

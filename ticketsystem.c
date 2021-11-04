@@ -120,6 +120,37 @@ void create_menu(char *file_data) {
 void list_menu(char *file_data) {
     printf("SEJA BEM-VINDO AO TICKETSYSTEM\n\n");
     printf("Lista de tickets\n");
+
+    FILE *file;
+
+    file = fopen(file_data, "r");
+
+    char name[100];
+    char description[300];
+    float price;
+    int status;
+    
+    while(!feof(file)){
+        printf("*** ");
+        fscanf(file, "%s %s %f %d", name, description, &price, &status);
+        printf("%s %s \n", name, description);     
+    }
+
+    int option;
+    printf("\n");
+    printf("Digite 0 para retornar ao menu principal\n");
+    scanf("%d", &option);
+
+    if (option == 0){
+        return;
+    }
+
+    while(option != 0){
+            printf("Opa! Você digitou uma opção que não existe. Digite 0 para retornar ao menu principal. \n");
+            scanf("%d", &option);
+    }
+
+    fclose(file); 
 }
 
 void search_menu(char *file_data, int id) {

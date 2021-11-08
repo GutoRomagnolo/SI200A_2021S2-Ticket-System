@@ -1,15 +1,26 @@
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <time.h>
 
 #define FILE_DATA "./file_data.txt"
+
+typedef struct {
+    char id[15];
+    char description[62];
+    float price;
+    int status;
+} Ticket;
 
 void start_menu();
 void create_menu(char *file_data);
 void list_menu(char *file_data);
-void search_menu(char *file_data, int id);
-void edit_menu(char *file_data, int id);
+void search_menu(char *file_data);
+void edit_menu(char *file_data);
 void remove_menu(char *file_data, int id);
+void ticketsystem();
+char *get_id(char *pointer_date);
 
 int main() {
 
@@ -38,10 +49,10 @@ int main() {
             list_menu(FILE_DATA);
             option = 0;
         } else if (option == 3) {
-            search_menu(FILE_DATA, 0);
+            search_menu(FILE_DATA);
             option = 0;
         } else if (option == 4) {
-            edit_menu(FILE_DATA, 0);
+            edit_menu(FILE_DATA);
             option = 0;
         } else if (option == 5) {
             remove_menu(FILE_DATA, 0);
@@ -78,94 +89,124 @@ void start_menu() {
 }
 
 void create_menu(char *file_data) {
-    char name[100], description[300];
-    float price;
-    int status;
+    Ticket ticket;
 
-    FILE *p;
+    FILE *fp = fopen("file_data.txt", "a");
     
-    printf("SEJA BEM-VINDO AO TICKETSYSTEM\n\n");
-    printf("Cadastrar ticket\n");
+    ticketsystem();
+    printf("Cadastrar ticket\n\n");
+        
+    char* id = get_id(ticket.id);
+
+    printf("Descrição do ingresso: ");
+    getchar();
+    fgets(ticket.description, 60, stdin);
+    ticket.description[strlen(ticket.description) - 1] = '\0';
     
-    printf("Título do ingresso:\t");
-    scanf("%s", name);
+    printf("Valor do ingresso: ");
+    scanf("%f", &ticket.price);
     
-    printf("Descrição do ingresso: \t");
-    scanf("%s", description);
+    printf("Situação do ingresso (0 = Indisponível ou 1 = Disponível): ");
+    scanf("%d", &ticket.status);
     
-    printf("Valor do ingresso:\t");
-    scanf("%f", &price);
-    
-    printf("Situação do ingresso:\t");
-    scanf("%d", &status);
-    
-    p = fopen("file_data.txt", "a");
-    
-    fprintf(p, "Título: %s\n", name);
-    fprintf(p, "Descrição: %s\n", description);
-    fprintf(p, "Preço: %.2f\n", price);
-    fprintf(p, "Status: %d\n", status);
-    
-    if(status == 1){
-        fprintf(p, "Status: Disponível\n");
-        fprintf(p, "\n");
-    }
-    
-    else{
-        fprintf(p, "Status: Indisponível\n");
-        fprintf(p, "\n");
-    }
-    
-    fclose(p);
+    fprintf(fp, "%s;%s;%f;%d\n", id, ticket.description, ticket.price, ticket.status);
+
+    fclose(fp);
 }
 
 void list_menu(char *file_data) {
-    printf("SEJA BEM-VINDO AO TICKETSYSTEM\n\n");
-    printf("Lista de tickets\n");
+    Ticket ticket;
 
-    FILE *file;
+    int option = 0;
+    char line[256];
 
-    file = fopen(file_data, "r");
+    FILE *fp = fopen(file_data, "r");
 
-    char name[100];
-    char description[300];
-    float price;
-    int status;
-    
-    while(!feof(file)){
-        printf("*** ");
-        fscanf(file, "%s %s %f %d", name, description, &price, &status);
-        printf("%s %s \n", name, description);     
+    ticketsystem();
+    printf("Lista de tickets\n\n");
+
+    printf("%-14s %-60s %-10s %-9s\n", "ID", "DESCRIÇÃO", "PREÇO", "SITUAÇÃO");
+
+    while (fgets(line, 256, fp) != NULL) {
+        sscanf(line, "%[^;];%[^;];%f;%d", ticket.id, ticket.description, &ticket.price, &ticket.status);
+        printf("%-14s %-58s %-9.2f %-8d\n", ticket.id, ticket.description, ticket.price, ticket.status);
     }
+    
+    fclose(fp);
 
-    int option;
-    printf("\n");
-    printf("Digite 0 para retornar ao menu principal\n");
+    printf("\nDigite 0 para retornar ao menu principal: ");
     scanf("%d", &option);
 
     if (option == 0){
         return;
     }
 
-    while(option != 0){
-            printf("Opa! Você digitou uma opção que não existe. Digite 0 para retornar ao menu principal. \n");
-            scanf("%d", &option);
+    while (option != 0) {
+        printf("Opa! Você digitou uma opção que não existe. Digite 0 para retornar ao menu principal.\n");
+        scanf("%d", &option);
     }
-
-    fclose(file); 
 }
 
-void search_menu(char *file_data, int id) {
-    printf("SEJA BEM-VINDO AO TICKETSYSTEM\n\n");
-    printf("Busca de tickets\n");
+void search_menu(char *file_data) {
+    Ticket ticket;
+
+    int option = 0;
+    char line[256];
+    char ticket_id[15];
+
+    ticketsystem();
+    printf("Busca de tickets\n\n");
+
+    printf("Digite o identificador do ingresso: ");
+    scanf("%s", ticket_id);
+    getchar();
+
+    FILE *fp = fopen(file_data, "r+");
+
+    while (fgets(line, 256, fp) != NULL) {
+        sscanf(line, "%[^;];%[^;];%f;%d", ticket.id, ticket.description, &ticket.price, &ticket.status);
+
+        if (strcmp(ticket.id, ticket_id) == 0) {
+            printf("Você deseja cancelar a venda do ingresso (0 = Cancelar ou 1 = Disponibilizar)? ");
+            scanf("%d", &option);
+            getchar();
+
+            int position = ftell(fp);
+            fseek(fp, position - 2, SEEK_SET);
+            fputc(option, fp);
+        }
+    }
+    
+    fclose(fp);
 }
 
-void edit_menu(char *file_data, int id) {
-    printf("SEJA BEM-VINDO AO TICKETSYSTEM\n\n");
-    printf("Editar ticket\n");
+void edit_menu(char *file_data) {
+    ticketsystem();
+    printf("Editar ticket\n\n");
 }
 
 void remove_menu(char *file_data, int id) {
-    printf("SEJA BEM-VINDO AO TICKETSYSTEM\n\n");
-    printf("Remover ticket\n");
+    char ticket_id[15];
+
+    ticketsystem();
+    printf("Remover ticket\n\n");
+
+    printf("Digite o identificador do ingresso: ");
+    scanf("%s", ticket_id);
+    getchar();
+
+    FILE *fp = fopen(file_data, "w+");
+
+    fclose(fp);
+}
+
+void ticketsystem() {
+    printf("**** TICKETSYSTEM ****\n\n");
+}
+
+char *get_id(char *pointer_date) {
+    time_t t = time(NULL);
+    struct tm* pointer_localtime = localtime(&t);
+    strftime(pointer_date, 15, "%Y%m%d%H%M%S", pointer_localtime);
+    return pointer_date;
 }

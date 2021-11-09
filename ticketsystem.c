@@ -187,15 +187,33 @@ void edit_menu(char *file_data) {
 
 void remove_menu(char *file_data, int id) {
     char ticket_id[15];
+    char line[256];
+    Ticket ticket;
+    #define NULO '0'
 
     ticketsystem();
+    FILE *fp = fopen(file_data, "r+");
     printf("Remover ticket\n\n");
 
     printf("Digite o identificador do ingresso: ");
     scanf("%s", ticket_id);
-    getchar();
 
-    FILE *fp = fopen(file_data, "w+");
+        while (fgets(line, 256, fp) != NULL) {
+        sscanf(line, "%[^;];%[^;];%f;%d", ticket.id, ticket.description, &ticket.price, &ticket.status);
+        getchar();
+        
+        if (strcmp(ticket.id, ticket_id) == 0 || strcmp(ticket.description, ticket_id) == 0) {
+            memset(ticket.id, 0, sizeof(char) * 50);
+            memset(ticket.description, 0, sizeof(char) * 50);
+            memset(&ticket.price, 0, sizeof(char) * 50);
+            memset(&ticket.status, 0, sizeof(char) * 50);
+
+            printf("Cadastro removido com sucesso!\n\n");
+        }
+    }
+    
+
+    //FILE *fp = fopen(file_data, "w+");
 
     fclose(fp);
 }

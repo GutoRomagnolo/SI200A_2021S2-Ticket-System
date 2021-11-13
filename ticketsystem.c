@@ -5,6 +5,7 @@
 #include <time.h>
 
 #define FILE_DATA "./file_data.txt"
+#define FILE_TEMP "./file_temp.txt"
 
 typedef struct {
     char id[15];
@@ -17,8 +18,8 @@ void start_menu();
 void create_menu(char *file_data);
 void list_menu(char *file_data);
 void search_menu(char *file_data);
-void edit_menu(char *file_data);
-void remove_menu(char *file_data, int id);
+void edit_menu(char *file_data, char *file_temp);
+void remove_menu(char *file_data, char *file_temp);
 void ticketsystem();
 char *get_id(char *pointer_date);
 
@@ -52,10 +53,10 @@ int main() {
             search_menu(FILE_DATA);
             option = 0;
         } else if (option == 4) {
-            edit_menu(FILE_DATA);
+            edit_menu(FILE_DATA, FILE_TEMP);
             option = 0;
         } else if (option == 5) {
-            remove_menu(FILE_DATA, 0);
+            remove_menu(FILE_DATA, FILE_TEMP);
             option = 0;
         } else if (option == 6) {
             printf("Deseja realmente sair (S/N)? ");
@@ -180,42 +181,101 @@ void search_menu(char *file_data) {
     fclose(fp);
 }
 
-void edit_menu(char *file_data) {
-    ticketsystem();
-    printf("Editar ticket\n\n");
-}
-
-void remove_menu(char *file_data, int id) {
+void edit_menu(char *file_data, char *file_temp) {
+    Ticket ticket;
+    
+    int line_edit = 0, counter = 0;
     char ticket_id[15];
     char line[256];
-    Ticket ticket;
-    #define NULO '0'
 
     ticketsystem();
-    FILE *fp = fopen(file_data, "r+");
-    printf("Remover ticket\n\n");
+    printf("Editar ticket\n\n");
+
+    FILE *fp_read = fopen(file_data, "r");
+    FILE *fp_write = fopen(file_temp, "w");
 
     printf("Digite o identificador do ingresso: ");
     scanf("%s", ticket_id);
 
-        while (fgets(line, 256, fp) != NULL) {
+    while (fgets(line, 256, fp_read) != NULL) {
         sscanf(line, "%[^;];%[^;];%f;%d", ticket.id, ticket.description, &ticket.price, &ticket.status);
-        getchar();
         
-        if (strcmp(ticket.id, ticket_id) == 0 || strcmp(ticket.description, ticket_id) == 0) {
-            memset(ticket.id, 0, sizeof(char) * 50);
-            memset(ticket.description, 0, sizeof(char) * 50);
-            memset(&ticket.price, 0, sizeof(char) * 50);
-            memset(&ticket.status, 0, sizeof(char) * 50);
+        line_edit++;
 
-            printf("Cadastro removido com sucesso!\n\n");
+        if (strcmp(ticket.id, ticket_id) == 0) {
+            break;
         }
     }
+
+    rewind(fp_read);
+
+    while (fgets(line, 256, fp_read) != NULL) {
+        counter++;  
+        if (counter != line_edit) {
+            fputs(line, fp_write);
+        } else {
+            printf("Descrição do ingresso: ");
+            getchar();
+            fgets(ticket.description, 60, stdin);
+            ticket.description[strlen(ticket.description) - 1] = '\0';
+
+            printf("Valor do ingresso: ");
+            scanf("%f", &ticket.price);
+
+            printf("Situação do ingresso (0 = Indisponível ou 1 = Disponível): ");
+            scanf("%d", &ticket.status);
+
+            fprintf(fp_write, "%s;%s;%f;%d\n", ticket_id, ticket.description, ticket.price, ticket.status);
+        }
+    }
+
+    fclose(fp_read);
+    fclose(fp_write);
+
+    remove(file_data);
+    rename(file_temp, file_data);
+}
+
+void remove_menu(char *file_data, char *file_temp) {
+    Ticket ticket;
     
+    int line_remove = 0, counter = 0;
+    char ticket_id[15];
+    char line[256];
 
-    //FILE *fp = fopen(file_data, "w+");
+    ticketsystem();
+    printf("Remover ticket\n\n");
 
-    fclose(fp);
+    FILE *fp_read = fopen(file_data, "r");
+    FILE *fp_write = fopen(file_temp, "w");
+
+    printf("Digite o identificador do ingresso: ");
+    scanf("%s", ticket_id);
+
+    while (fgets(line, 256, fp_read) != NULL) {
+        sscanf(line, "%[^;];%[^;];%f;%d", ticket.id, ticket.description, &ticket.price, &ticket.status);
+        
+        line_remove++;
+
+        if (strcmp(ticket.id, ticket_id) == 0) {
+            break;
+        }
+    }
+
+    rewind(fp_read);
+
+    while (fgets(line, 256, fp_read) != NULL) {
+        counter++;  
+        if (counter != line_remove) {
+            fputs(line, fp_write);
+        }
+    }
+
+    fclose(fp_read);
+    fclose(fp_write);
+
+    remove(file_data);
+    rename(file_temp, file_data);
 }
 
 void ticketsystem() {

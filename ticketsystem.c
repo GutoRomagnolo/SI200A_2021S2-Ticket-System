@@ -232,7 +232,7 @@ void edit_menu(char *file_data) {
 
     while (loop_lines < count_lines) {
         if (strcmp(tickets[loop_lines].id, ticket_id) == 0) {
-            printf("Descrição do ingresso: ");
+            printf("Descricao do ingresso: ");
 
             char temp_description[62];
 
@@ -246,7 +246,7 @@ void edit_menu(char *file_data) {
             printf("Valor do ingresso: ");
             scanf("%f", &tickets[loop_lines].price);
 
-            printf("Situação do ingresso (0 = Indisponível ou 1 = Disponível): ");
+            printf("Situacao do ingresso (0 = Indisponivel ou 1 = Disponivel): ");
             scanf("%d", &ticket.status);
 
             tickets[loop_lines].status = ticket.status;

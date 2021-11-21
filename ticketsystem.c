@@ -5,7 +5,6 @@
 #include <time.h>
 
 #define FILE_DATA "./file_data.txt"
-#define FILE_TEMP "./file_temp.txt"
 
 typedef struct {
     char id[15];
@@ -18,8 +17,8 @@ void start_menu();
 void create_menu(char *file_data);
 void list_menu(char *file_data);
 void search_menu(char *file_data);
-void edit_menu(char *file_data, char *file_temp);
-void remove_menu(char *file_data, char *file_temp);
+void edit_menu(char *file_data);
+void remove_menu(char *file_data);
 void ticketsystem();
 char *get_id(char *pointer_date);
 
@@ -53,10 +52,10 @@ int main() {
             search_menu(FILE_DATA);
             option = 0;
         } else if (option == 4) {
-            edit_menu(FILE_DATA, FILE_TEMP);
+            edit_menu(FILE_DATA);
             option = 0;
         } else if (option == 5) {
-            remove_menu(FILE_DATA, FILE_TEMP);
+            remove_menu(FILE_DATA);
             option = 0;
         } else if (option == 6) {
             printf("Deseja realmente sair (S/N)? ");
@@ -99,15 +98,15 @@ void create_menu(char *file_data) {
         
     char* id = get_id(ticket.id);
 
-    printf("Descrição do ingresso: ");
+    printf("Descricao do ingresso: ");
     getchar();
-    fgets(ticket.description, 60, stdin);
+    fgets(ticket.description, 62, stdin);
     ticket.description[strlen(ticket.description) - 1] = '\0';
     
     printf("Valor do ingresso: ");
     scanf("%f", &ticket.price);
     
-    printf("Situação do ingresso (0 = Indisponível ou 1 = Disponível): ");
+    printf("Situacao do ingresso (0 = Indisponivel ou 1 = Disponivel): ");
     scanf("%d", &ticket.status);
     
     fprintf(fp, "%s;%s;%f;%d\n", id, ticket.description, ticket.price, ticket.status);
@@ -118,20 +117,22 @@ void create_menu(char *file_data) {
 void list_menu(char *file_data) {
     Ticket ticket;
 
-    int option = 0;
-    char line[256];
+    int option = 0, 
+        line = 0;
 
     FILE *fp = fopen(file_data, "r");
 
     ticketsystem();
     printf("Lista de tickets\n\n");
 
-    printf("%-14s %-60s %-10s %-9s\n", "ID", "DESCRIÇÃO", "PREÇO", "SITUAÇÃO");
+    printf("%-15s %-62s %-10s %-9s\n", "ID", "DESCRICAO", "PRECO", "SITUACAO");
 
-    while (fgets(line, 256, fp) != NULL) {
-        sscanf(line, "%[^;];%[^;];%f;%d", ticket.id, ticket.description, &ticket.price, &ticket.status);
-        printf("%-14s %-58s %-9.2f %-8d\n", ticket.id, ticket.description, ticket.price, ticket.status);
-    }
+    do {
+        line = fscanf(fp, "%[^;];%[^;];%f;%d ", ticket.id, ticket.description, &ticket.price, &ticket.status);
+        if (line == 0) break;
+        printf("%-15s %-62s %-10.2f %-9d\n", ticket.id, ticket.description, ticket.price, ticket.status);
+
+    } while (!feof(fp));
     
     fclose(fp);
 
@@ -143,7 +144,7 @@ void list_menu(char *file_data) {
     }
 
     while (option != 0) {
-        printf("Opa! Você digitou uma opção que não existe. Digite 0 para retornar ao menu principal.\n");
+        printf("Opa! Você digitou uma opcao que nao existe. Digite 0 para retornar ao menu principal.\n");
         scanf("%d", &option);
     }
 }
@@ -151,8 +152,8 @@ void list_menu(char *file_data) {
 void search_menu(char *file_data) {
     Ticket ticket;
 
-    int option = 0;
-    char line[256];
+    int option = 0, 
+        line = 0;
     char ticket_id[15];
 
     ticketsystem();
@@ -164,118 +165,174 @@ void search_menu(char *file_data) {
 
     FILE *fp = fopen(file_data, "r+");
 
-    while (fgets(line, 256, fp) != NULL) {
-        sscanf(line, "%[^;];%[^;];%f;%d", ticket.id, ticket.description, &ticket.price, &ticket.status);
+    do {
+        line = fscanf(fp, "%[^;];%[^;];%f;%d ", ticket.id, ticket.description, &ticket.price, &ticket.status);
+        if (line == 0) break;
 
         if (strcmp(ticket.id, ticket_id) == 0) {
             printf("Você deseja cancelar a venda do ingresso (0 = Cancelar ou 1 = Disponibilizar)? ");
             scanf("%d", &option);
             getchar();
-
-            int position = ftell(fp);
-            fseek(fp, position - 2, SEEK_SET);
-            fputc(option, fp);
+            
+            fseek(fp, -2, SEEK_CUR);
+            fprintf(fp, "%d", option);
         }
-    }
+    } while (!feof(fp));
     
     fclose(fp);
 }
 
-void edit_menu(char *file_data, char *file_temp) {
-    Ticket ticket;
-    
-    int line_edit = 0, counter = 0;
+void edit_menu(char *file_data) {
+    int line = 0, 
+        count_lines = 0,
+        loop_lines = 0;
+    char break_line;
     char ticket_id[15];
-    char line[256];
 
+    Ticket ticket;
+    Ticket* tickets;
+    
     ticketsystem();
     printf("Editar ticket\n\n");
 
     FILE *fp_read = fopen(file_data, "r");
-    FILE *fp_write = fopen(file_temp, "w");
 
     printf("Digite o identificador do ingresso: ");
     scanf("%s", ticket_id);
-
-    while (fgets(line, 256, fp_read) != NULL) {
-        sscanf(line, "%[^;];%[^;];%f;%d", ticket.id, ticket.description, &ticket.price, &ticket.status);
-        
-        line_edit++;
-
-        if (strcmp(ticket.id, ticket_id) == 0) {
-            break;
+    getchar();
+    
+    while (!feof(fp_read)) {
+        break_line = fgetc(fp_read);
+        if (break_line == '\n') {
+            count_lines++;
         }
     }
 
     rewind(fp_read);
 
-    while (fgets(line, 256, fp_read) != NULL) {
-        counter++;  
-        if (counter != line_edit) {
-            fputs(line, fp_write);
+    tickets = (Ticket*) malloc(sizeof(Ticket) * count_lines);
+
+    while (!feof(fp_read)) {
+        line = fscanf(fp_read, "%[^;];%[^;];%f;%d ", ticket.id, ticket.description, &ticket.price, &ticket.status);
+
+        if (line == 0) {
+            break;
         } else {
+            strcpy(tickets[loop_lines].id, ticket.id);
+            strcpy(tickets[loop_lines].description, ticket.description);
+            tickets[loop_lines].price = ticket.price;
+            tickets[loop_lines].status = ticket.status;
+            loop_lines++;
+        }
+    }
+
+    FILE *fp_write = fopen(file_data, "w");
+
+    loop_lines = 0;
+
+    while (loop_lines < count_lines) {
+        if (strcmp(tickets[loop_lines].id, ticket_id) == 0) {
             printf("Descrição do ingresso: ");
-            getchar();
-            fgets(ticket.description, 60, stdin);
-            ticket.description[strlen(ticket.description) - 1] = '\0';
+
+            char temp_description[62];
+
+            fgets(temp_description, sizeof temp_description, stdin);
+            temp_description[strlen(temp_description) - 1] = '\0';
+
+            strcpy(tickets[loop_lines].description, temp_description);
+
+            printf("%s", tickets[loop_lines].description);
 
             printf("Valor do ingresso: ");
-            scanf("%f", &ticket.price);
+            scanf("%f", &tickets[loop_lines].price);
 
             printf("Situação do ingresso (0 = Indisponível ou 1 = Disponível): ");
             scanf("%d", &ticket.status);
 
-            fprintf(fp_write, "%s;%s;%f;%d\n", ticket_id, ticket.description, ticket.price, ticket.status);
+            tickets[loop_lines].status = ticket.status;
         }
+
+        fprintf(
+            fp_write, 
+            "%s;%s;%f;%d\n", 
+            tickets[loop_lines].id, 
+            tickets[loop_lines].description, 
+            tickets[loop_lines].price, 
+            tickets[loop_lines].status
+        );
+
+        loop_lines++;
     }
 
     fclose(fp_read);
     fclose(fp_write);
-
-    remove(file_data);
-    rename(file_temp, file_data);
 }
 
-void remove_menu(char *file_data, char *file_temp) {
-    Ticket ticket;
-    
-    int line_remove = 0, counter = 0;
+void remove_menu(char *file_data) {
+    int line = 0, 
+        count_lines = 0,
+        loop_lines = 0;
+    char break_line;
     char ticket_id[15];
-    char line[256];
+
+    Ticket ticket;
+    Ticket* tickets;
 
     ticketsystem();
     printf("Remover ticket\n\n");
 
     FILE *fp_read = fopen(file_data, "r");
-    FILE *fp_write = fopen(file_temp, "w");
 
     printf("Digite o identificador do ingresso: ");
     scanf("%s", ticket_id);
-
-    while (fgets(line, 256, fp_read) != NULL) {
-        sscanf(line, "%[^;];%[^;];%f;%d", ticket.id, ticket.description, &ticket.price, &ticket.status);
-        
-        line_remove++;
-
-        if (strcmp(ticket.id, ticket_id) == 0) {
-            break;
+    getchar();
+    
+    while (!feof(fp_read)) {
+        break_line = fgetc(fp_read);
+        if (break_line == '\n') {
+            count_lines++;
         }
     }
 
     rewind(fp_read);
 
-    while (fgets(line, 256, fp_read) != NULL) {
-        counter++;  
-        if (counter != line_remove) {
-            fputs(line, fp_write);
+    tickets = (Ticket*) malloc(sizeof(Ticket) * count_lines);
+
+    while (!feof(fp_read)) {
+        line = fscanf(fp_read, "%[^;];%[^;];%f;%d ", ticket.id, ticket.description, &ticket.price, &ticket.status);
+
+        if (line == 0) {
+            break;
+        } else {
+            strcpy(tickets[loop_lines].id, ticket.id);
+            strcpy(tickets[loop_lines].description, ticket.description);
+            tickets[loop_lines].price = ticket.price;
+            tickets[loop_lines].status = ticket.status;
+            loop_lines++;
         }
+    }
+
+    FILE *fp_write = fopen(file_data, "w");
+
+    loop_lines = 0;
+
+    while (loop_lines < count_lines) {
+        if (strcmp(tickets[loop_lines].id, ticket_id) != 0) {
+            fprintf(
+                fp_write, 
+                "%s;%s;%f;%d\n", 
+                tickets[loop_lines].id, 
+                tickets[loop_lines].description, 
+                tickets[loop_lines].price, 
+                tickets[loop_lines].status
+            );
+        }
+
+        loop_lines++;
     }
 
     fclose(fp_read);
     fclose(fp_write);
-
-    remove(file_data);
-    rename(file_temp, file_data);
 }
 
 void ticketsystem() {

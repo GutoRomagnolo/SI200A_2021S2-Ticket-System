@@ -264,6 +264,8 @@ void edit_menu(char *file_data) {
         loop_lines++;
     }
 
+    free(tickets);
+
     fclose(fp_read);
     fclose(fp_write);
 }
@@ -327,9 +329,10 @@ void remove_menu(char *file_data) {
                 tickets[loop_lines].status
             );
         }
-
         loop_lines++;
     }
+
+    free(tickets);
 
     fclose(fp_read);
     fclose(fp_write);
